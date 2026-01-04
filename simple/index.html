@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>My Simple ToDo</title>
+  <style>
+    /* * デザインは可愛くしつつ、CSS変数を使い回すなど 
+     * 「自分が使いやすいように組んだ」感を出す
+     */
+    :root {
+      --primary: #9944ff;
+      --bg: #f5f0ff;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+    }
+
+    .todo-app {
+      background: #fff;
+      width: 90%;
+      max-width: 500px;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 { color: var(--primary); text-align: center; margin-bottom: 20px; }
+
+    /* 入力エリアを横並びに */
+    .input-group {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input[type="text"]:focus { border-color: var(--primary); }
+
+    .add-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* リスト部分 */
+    .list-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      gap: 10px;
+    }
+
+    .list-item:last-child { border: none; }
+
+    .list-item.done span {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .priority-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .p-high { background: #ff4d4d; }
+    .p-med { background: #ffad33; }
+    .p-low { background: #33d6ff; }
+
+    .task-text { flex: 1; cursor: pointer; }
+
+    .del-btn {
+      color: #ffb3ba;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* フッター統計 */
+    .footer {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .clear-link {
+      color: var(--primary);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="todo-app">
+  <h1>ToDo List</h1>
+  
+  <div class="input-group">
+    <input type="text" id="newTodo" placeholder="何する？">
+    <select id="priority">
+      <option value="high">高</option>
+      <option value="med" selected>中</option>
+      <option value="low">低</option>
+    </select>
+    <button class="add-btn" onclick="addTodo()">追加</button>
+  </div>
+
+  <div id="todoList">
+    </div>
+
+  <div class="footer">
+    <span id="counter">残りのタスク: 0</span>
+    <span class="clear-link" onclick="clearDone()">完了済みを消す</span>
+  </div>
+</div>
+
+<script>
+  // データ保持（localStorageから復元）
+  let todos = JSON.parse(localStorage.getItem('my_todos')) || [];
+
+  const listEl = document.getElementById('todoList');
+  const inputEl = document.getElementById('newTodo');
+
+  // 描画処理
+  function render() {
+    listEl.innerHTML = todos.map(todo => `
+      <div class="list-item ${todo.done ? 'done' : ''}" data-id="${todo.id}">
+        <div class="priority-dot p-${todo.priority}"></div>
+        <span class="task-text">${todo.text}</span>
+        <button class="del-btn">削除</button>
+      </div>
+    `).join('');
+
+    // カウント更新
+    const activeCount = todos.filter(t => !t.done).length;
+    document.getElementById('counter').innerText = `残りのタスク: ${activeCount}`;
+    
+    // 保存
+    localStorage.setItem('my_todos', JSON.stringify(todos));
+  }
+
+  // 追加
+  function addTodo() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    todos.push({
+      id: Date.now(), // ID生成を簡単に
+      text,
+      priority: document.getElementById('priority').value,
+      done: false
+    });
+
+    inputEl.value = '';
+    render();
+  }
+
+  // 削除・完了の切り替え（イベント委譲でスッキリさせる）
+  listEl.addEventListener('click', (e) => {
+    const id = Number(e.target.closest('.list-item').dataset.id);
+    
+    if (e.target.classList.contains('del-btn')) {
+      todos = todos.filter(t => t.id !== id);
+    } else {
+      // テキスト部分クリックで完了切り替え
+      const todo = todos.find(t => t.id === id);
+      if (todo) todo.done = !todo.done;
+    }
+    render();
+  });
+
+  // 完了済みを一括削除
+  function clearDone() {
+    if (!confirm('完了した項目を消しちゃいますか？')) return;
+    todos = todos.filter(t => !t.done);
+    render();
+  }
+
+  // エンターキー対応
+  inputEl.onkeydown = (e) => { if (e.key === 'Enter') addTodo(); };
+
+  // 初回表示
+  render();
+</script>
+
+</body>
+</html>
