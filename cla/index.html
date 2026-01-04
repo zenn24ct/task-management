@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToDoリスト</title>
+  <style>
+    /* ========================================
+       基本設定
+       ======================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #e8ccff 0%, #d4a3ff 50%, #cb8eff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ========================================
+       メインコンテナ
+       ======================================== */
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 40px;
+      padding: 50px 45px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(150, 50, 255, 0.15);
+      border: 3px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #b366ff, #9944ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 35px;
+      letter-spacing: 1px;
+    }
+
+    /* ========================================
+       タスク追加エリア
+       ======================================== */
+    .add-task-section {
+      background: linear-gradient(135deg, #f9f0ff 0%, #f0e1ff 100%);
+      border-radius: 25px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 2px solid #e8d6ff;
+      box-shadow: inset 0 2px 8px rgba(150, 50, 255, 0.05);
+    }
+
+    .input-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .task-input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 2px solid #d4a3ff;
+      border-radius: 15px;
+      font-size: 16px;
+      background: white;
+      color: #333;
+      transition: all 0.3s ease;
+    }
+
+    .task-input:focus {
+      outline: none;
+      border-color: #b366ff;
+      box-shadow: 0 4px 15px rgba(150, 50, 255, 0.15);
+    }
+
+    .task-input::placeholder {
+      color: #999;
+    }
+
+    .priority-select {
+      padding: 16px;
+      border: 2px solid #d4a3ff;
+      border-radius: 15px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .priority-select:focus {
+      outline: none;
+      border-color: #b366ff;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #b366ff 0%, #9944ff 100%);
+      color: white;
+      padding: 16px 40px;
+      border: none;
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(150, 50, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-add:hover {
+      background: linear-gradient(135deg, #a855ee 0%, #8833ee 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(150, 50, 255, 0.3);
+    }
+
+    /* ========================================
+       フィルターボタン
+       ======================================== */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 12px 24px;
+      border: 2px solid #e8d6ff;
+      border-radius: 15px;
+      background: white;
+      color: #666;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: #b366ff;
+      transform: translateY(-2px);
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #b366ff, #9944ff);
+      color: white;
+      border-color: #9944ff;
+    }
+
+    /* ========================================
+       タスクリスト
+       ======================================== */
+    .tasks-list {
+      margin-bottom: 30px;
+      min-height: 200px;
+    }
+
+    .task-item {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 12px;
+      border: 2px solid #f0e1ff;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .task-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(150, 50, 255, 0.12);
+    }
+
+    .task-item.completed {
+      opacity: 0.6;
+      background: #f9f9f9;
+    }
+
+    .task-checkbox {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #d4a3ff;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .task-checkbox:hover {
+      border-color: #b366ff;
+      transform: scale(1.1);
+    }
+
+    .task-item.completed .task-checkbox {
+      background: linear-gradient(135deg, #a8e6a1, #76d672);
+      border-color: #76d672;
+      color: white;
+    }
+
+    .task-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .task-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      word-break: break-word;
+    }
+
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .task-priority {
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .task-priority.high {
+      background: #ffb3ba;
+      color: #cc0000;
+    }
+
+    .task-priority.medium {
+      background: #ffd4a3;
+      color: #cc6600;
+    }
+
+    .task-priority.low {
+      background: #d4e8ff;
+      color: #0066cc;
+    }
+
+    .task-time {
+      color: #999;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-delete {
+      background: linear-gradient(135deg, #ffb3ba, #ff8a95);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-delete:hover {
+      background: linear-gradient(135deg, #ffa3aa, #ff7882);
+      transform: translateY(-2px);
+    }
+
+    /* ========================================
+       空の状態
+       ======================================== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 30px;
+      color: #999;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* ========================================
+       統計表示
+       ======================================== */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      padding: 25px;
+      background: linear-gradient(135deg, #f9f0ff 0%, #f0e1ff 100%);
+      border-radius: 25px;
+      border: 2px solid #e8d6ff;
+      box-shadow: 0 4px 15px rgba(150, 50, 255, 0.08);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 15px;
+      background: white;
+      border-radius: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(150, 50, 255, 0.12);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #b366ff, #9944ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ========================================
+       通知
+       ======================================== */
+    .notification {
+      position: fixed;
+      top: 25px;
+      right: 25px;
+      background: white;
+      padding: 20px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(150, 50, 255, 0.25);
+      transform: translateX(500px);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      border-left: 5px solid #a8e6a1;
+      max-width: 350px;
+      font-weight: 600;
+      color: #5a5a5a;
+      border: 2px solid #e8d6ff;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.error {
+      border-left-color: #ffb3ba;
+    }
+
+    /* ========================================
+       クリアボタン
+       ======================================== */
+    .clear-section {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #f0e1ff;
+    }
+
+    .btn-clear {
+      background: linear-gradient(135deg, #ffb3ba, #ff8a95);
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 15px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-clear:hover {
+      background: linear-gradient(135deg, #ffa3aa, #ff7882);
+      transform: translateY(-2px);
+    }
+
+    /* ========================================
+       レスポンシブ
+       ======================================== */
+    @media (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .input-container {
+        flex-direction: column;
+      }
+
+      .task-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .task-actions {
+        width: 100%;
+      }
+
+      .btn-delete {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- メインコンテナ -->
+  <div class="container">
+    <!-- タイトル -->
+    <h1 class="title">ToDoリスト</h1>
+
+    <!-- タスク追加エリア -->
+    <div class="add-task-section">
+      <div class="input-container">
+        <input type="text" class="task-input" id="taskInput" placeholder="新しいタスクを入力...">
+        <select class="priority-select" id="prioritySelect">
+          <option value="low">低</option>
+          <option value="medium" selected>中</option>
+          <option value="high">高</option>
+        </select>
+      </div>
+      <button class="btn-add" id="addBtn">タスクを追加</button>
+    </div>
+
+    <!-- フィルター -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">すべて</button>
+      <button class="filter-btn" data-filter="active">未完了</button>
+      <button class="filter-btn" data-filter="completed">完了済み</button>
+      <button class="filter-btn" data-filter="high">高優先度</button>
+    </div>
+
+    <!-- タスクリスト -->
+    <div class="tasks-list" id="tasksList">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📝</div>
+        <div class="empty-text">タスクを追加してみましょう</div>
+      </div>
+    </div>
+
+    <!-- 統計 -->
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-label">全タスク</div>
+        <div class="stat-value" id="totalTasks">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">未完了</div>
+        <div class="stat-value" id="activeTasks">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">完了済み</div>
+        <div class="stat-value" id="completedTasks">0</div>
+      </div>
+    </div>
+
+    <!-- クリアボタン -->
+    <div class="clear-section">
+      <button class="btn-clear" id="clearBtn">完了済みタスクを削除</button>
+    </div>
+  </div>
+
+  <!-- 通知 -->
+  <div class="notification" id="notification"></div>
+
+  <script>
+    // ========================================
+    // アプリケーション全体の状態管理
+    // ========================================
+    const AppState = {
+      tasks: [],
+      nextId: 1,
+      currentFilter: 'all'
+    };
+
+    // ========================================
+    // DOM要素の取得
+    // ========================================
+    const DOM = {
+      taskInput: document.getElementById('taskInput'),
+      prioritySelect: document.getElementById('prioritySelect'),
+      addBtn: document.getElementById('addBtn'),
+      tasksList: document.getElementById('tasksList'),
+      emptyState: document.getElementById('emptyState'),
+      filterBtns: document.querySelectorAll('.filter-btn'),
+      totalTasks: document.getElementById('totalTasks'),
+      activeTasks: document.getElementById('activeTasks'),
+      completedTasks: document.getElementById('completedTasks'),
+      clearBtn: document.getElementById('clearBtn'),
+      notification: document.getElementById('notification')
+    };
+
+    // ========================================
+    // ユーティリティ関数
+    // ========================================
+    const Utils = {
+      // 現在時刻を取得（HH:MM形式）
+      getCurrentTime: function() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      },
+
+      // 優先度の日本語名を取得
+      getPriorityLabel: function(priority) {
+        const labels = {
+          high: '高',
+          medium: '中',
+          low: '低'
+        };
+        return labels[priority] || '中';
+      }
+    };
+
+    // ========================================
+    // ストレージ操作
+    // ========================================
+    const Storage = {
+      // タスクを保存
+      save: function() {
+        try {
+          const data = {
+            tasks: AppState.tasks,
+            nextId: AppState.nextId
+          };
+          localStorage.setItem('todoData', JSON.stringify(data));
+        } catch (e) {
+          console.error('保存エラー:', e);
+        }
+      },
+
+      // タスクを読み込み
+      load: function() {
+        try {
+          const saved = localStorage.getItem('todoData');
+          if (saved) {
+            const data = JSON.parse(saved);
+            AppState.tasks = data.tasks || [];
+            AppState.nextId = data.nextId || 1;
+          }
+        } catch (e) {
+          console.error('読み込みエラー:', e);
+        }
+      }
+    };
+
+    // ========================================
+    // タスク管理
+    // ========================================
+    const TaskManager = {
+      // タスクを追加
+      add: function(text, priority) {
+        if (!text.trim()) {
+          Notification.show('タスク内容を入力してください', 'error');
+          return;
+        }
+
+        const task = {
+          id: AppState.nextId++,
+          text: text.trim(),
+          priority: priority,
+          completed: false,
+          createdAt: new Date().toISOString(),
+          time: Utils.getCurrentTime()
+        };
+
+        AppState.tasks.unshift(task);
+        Storage.save();
+        Display.render();
+        Notification.show('タスクを追加しました！');
+
+        // 入力をクリア
+        DOM.taskInput.value = '';
+        DOM.taskInput.focus();
+      },
+
+      // タスクを削除
+      delete: function(id) {
+        AppState.tasks = AppState.tasks.filter(t => t.id !== id);
+        Storage.save();
+        Display.render();
+        Notification.show('タスクを削除しました');
+      },
+
+      // タスクの完了状態をトグル
+      toggle: function(id) {
+        const task = AppState.tasks.find(t => t.id === id);
+        if (task) {
+          task.completed = !task.completed;
+          Storage.save();
+          Display.render();
+        }
+      },
+
+      // 完了済みタスクをすべて削除
+      clearCompleted: function() {
+        const completedCount = AppState.tasks.filter(t => t.completed).length;
+        
+        if (completedCount === 0) {
+          Notification.show('完了済みタスクがありません', 'error');
+          return;
+        }
+
+        if (confirm(`${completedCount}個の完了済みタスクを削除しますか？`)) {
+          AppState.tasks = AppState.tasks.filter(t => !t.completed);
+          Storage.save();
+          Display.render();
+          Notification.show(`${completedCount}個のタスクを削除しました`);
+        }
+      },
+
+      // フィルター条件に合うタスクを取得
+      getFilteredTasks: function() {
+        switch(AppState.currentFilter) {
+          case 'active':
+            return AppState.tasks.filter(t => !t.completed);
+          case 'completed':
+            return AppState.tasks.filter(t => t.completed);
+          case 'high':
+            return AppState.tasks.filter(t => t.priority === 'high');
+          default:
+            return AppState.tasks;
+        }
+      }
+    };
+
+    // ========================================
+    // 表示管理
+    // ========================================
+    const Display = {
+      // 全体を再描画
+      render: function() {
+        this.renderTasksList();
+        this.updateStats();
+      },
+
+      // タスクリストを描画
+      renderTasksList: function() {
+        const filteredTasks = TaskManager.getFilteredTasks();
+
+        if (filteredTasks.length === 0) {
+          DOM.emptyState.style.display = 'block';
+          DOM.tasksList.innerHTML = '';
+          DOM.tasksList.appendChild(DOM.emptyState);
+          return;
+        }
+
+        DOM.emptyState.style.display = 'none';
+        DOM.tasksList.innerHTML = '';
+
+        filteredTasks.forEach(task => {
+          const item = document.createElement('div');
+          item.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+          item.innerHTML = `
+            <div class="task-checkbox" data-id="${task.id}">
+              ${task.completed ? '✓' : ''}
+            </div>
+            <div class="task-content">
+              <div class="task-text">${task.text}</div>
+              <div class="task-meta">
+                <span class="task-priority ${task.priority}">
+                  ${Utils.getPriorityLabel(task.priority)}
+                </span>
+                <span class="task-time">${task.time}</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="btn-delete" data-id="${task.id}">削除</button>
+            </div>
+          `;
+
+          DOM.tasksList.appendChild(item);
+        });
+
+        // イベントリスナーを追加
+        this.attachEventListeners();
+      },
+
+      // イベントリスナーを追加
+      attachEventListeners: function() {
+        // チェックボックスのクリック
+        document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('click', () => {
+            const id = parseInt(checkbox.dataset.id);
+            TaskManager.toggle(id);
+          });
+        });
+
+        // 削除ボタンのクリック
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            TaskManager.delete(id);
+          });
+        });
+      },
+
+      // 統計を更新
+      updateStats: function() {
+        const total = AppState.tasks.length;
+        const completed = AppState.tasks.filter(t => t.completed).length;
+        const active = total - completed;
+
+        DOM.totalTasks.textContent = total;
+        DOM.activeTasks.textContent = active;
+        DOM.completedTasks.textContent = completed;
+      }
+    };
+
+    // ========================================
+    // フィルター管理
+    // ========================================
+    const FilterManager = {
+      // フィルターを設定
+      set: function(filter) {
+        AppState.currentFilter = filter;
+
+        // ボタンの見た目を更新
+        DOM.filterBtns.forEach(btn => {
+          if (btn.dataset.filter === filter) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        Display.render();
+      }
+    };
+
+    // ========================================
+    // 通知表示
+    // ========================================
+    const Notification = {
+      show: function(message, type = 'success') {
+        DOM.notification.textContent = message;
+        DOM.notification.classList.remove('error');
+        
+        if (type === 'error') {
+          DOM.notification.classList.add('error');
+        }
+        
+        DOM.notification.classList.add('show');
+        
+        setTimeout(() => {
+          DOM.notification.classList.remove('show');
+        }, 3000);
+      }
+    };
+
+    // ========================================
+    // イベントリスナーの設定
+    // ========================================
+    const EventListeners = {
+      setup: function() {
+        // 追加ボタン
+        DOM.addBtn.addEventListener('click', () => {
+          TaskManager.add(DOM.taskInput.value, DOM.prioritySelect.value);
+        });
+
+        // Enterキーで追加
+        DOM.taskInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            TaskManager.add(DOM.taskInput.value, DOM.prioritySelect.value);
+          }
+        });
+
+        // フィルターボタン
+        DOM.filterBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            FilterManager.set(btn.dataset.filter);
+          });
+        });
+
+        // クリアボタン
+        DOM.clearBtn.addEventListener('click', () => {
+          TaskManager.clearCompleted();
+        });
+      }
+    };
+
+    // ========================================
+    // 初期化
+    // ========================================
+    function init() {
+      Storage.load();
+      Display.render();
+      EventListeners.setup();
+      DOM.taskInput.focus();
+    }
+
+    // アプリケーション起動
+    init();
+  </script>
+</body>
+</html>
